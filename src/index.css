@@ -2,6 +2,24 @@
 @tailwind components;
 @tailwind utilities;
 
+.butterfly-flight { position: fixed; inset: 0; z-index: 20; pointer-events: none; }
+.butterfly-flight canvas { display: block; width: 100%; height: 100%; }
+.model-viewer { position: relative; height: 320px; }
+.model-viewer-stage { position: absolute; inset: 0; }
+.model-viewer-stage canvas { display: block; }
+.model-preview-bee { background: radial-gradient(ellipse, #e0e7ffb0, #fef9c360 75%); }
+.model-preview-butterfly { background: radial-gradient(ellipse, #bae6fd90, #ede9fe90 75%); }
+.model-preview-hummingbird { background: radial-gradient(ellipse, #a7f3d080, #e0f2fe90 75%); }
+.model-preview-phoenix { background: radial-gradient(ellipse, #fed7aa90, #fce7f390 75%); }
+.model-dialog { border: 0; padding: 0; background: transparent; width: min(900px, calc(100vw - 24px)); max-height: 92dvh; overflow-y: auto; color: #0f172a; }
+.model-dialog::backdrop { background: #0f172a80; backdrop-filter: blur(12px); }
+.model-dialog .model-viewer { height: min(55dvh, 540px); min-height: 220px; }
+.butterfly-toggle {
+  position: fixed; bottom: 18px; left: 18px; z-index: 30;
+  width: 36px; height: 36px; display: grid; place-items: center;
+  border-radius: 50%; color: #6366f1;
+}
+
 .cinema-header, .glass-panel {
   background: linear-gradient(120deg, rgb(255 255 255 / 82%), rgb(238 242 255 / 56%));
   backdrop-filter: blur(24px) saturate(160%);

@@ -23,6 +23,7 @@ import {
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import CustomSelect from '../components/CustomSelect';
+import ButterflyFlight from '../components/ButterflyFlight';
 
 const GENRES = ['Barchasi', 'Fantastika', 'Triller', 'Drama', 'Sarguzasht', 'Animatsiya'];
 
@@ -154,6 +155,7 @@ export default function HomePage() {
 
   return (
     <div className="cinema-page min-h-screen flex flex-col">
+      <ButterflyFlight />
       <Header
         onOpenCreateModal={isAdmin ? handleOpenCreate : undefined}
         activeTab={activeTab}

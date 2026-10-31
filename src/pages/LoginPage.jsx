@@ -13,6 +13,7 @@ export default function LoginPage() {
   const [error, setError] = useState('');
   const [pending, setPending] = useState(false);
   const [adminMode, setAdminMode] = useState(false);
+  const [editable, setEditable] = useState({});
 
   const handleSubmit = async (e) => {
     if (pending) return;
@@ -78,9 +79,9 @@ export default function LoginPage() {
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} autoComplete="off" className="space-y-4">
             <div className="flex gap-2">
-              {[false, true].map(mode => <button key={String(mode)} type="button" disabled={pending} onClick={() => { setAdminMode(mode); setPassword(''); setError(''); }} className={`flex-1 py-2 rounded-xl text-sm font-semibold ${adminMode === mode ? 'bg-indigo-600 text-white' : 'bg-slate-100 text-slate-600'}`}>{mode ? 'Admin' : 'Foydalanuvchi'}</button>)}
+              {[false, true].map(mode => <button key={String(mode)} type="button" disabled={pending} onClick={() => { setAdminMode(mode); setPhoneNumber(''); setPassword(''); setEditable({}); setError(''); }} className={`flex-1 py-2 rounded-xl text-sm font-semibold ${adminMode === mode ? 'bg-indigo-600 text-white' : 'bg-slate-100 text-slate-600'}`}>{mode ? 'Admin' : 'Foydalanuvchi'}</button>)}
             </div>
             {/* phoneNumber */}
             {!adminMode && <div>
@@ -92,6 +93,10 @@ export default function LoginPage() {
                 <input
                   type="tel"
                   name="phoneNumber"
+                  autoComplete="off"
+                  inputMode="tel"
+                  readOnly={!editable.phone}
+                  onFocus={() => setEditable(value => ({ ...value, phone: true }))}
                   required
                   value={phoneNumber}
                   onChange={(e) => setPhoneNumber(e.target.value)}
@@ -111,6 +116,9 @@ export default function LoginPage() {
                 <input
                   type={showPassword ? 'text' : 'password'}
                   name="password"
+                  autoComplete="new-password"
+                  readOnly={!editable.password}
+                  onFocus={() => setEditable(value => ({ ...value, password: true }))}
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}

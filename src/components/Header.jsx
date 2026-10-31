@@ -214,23 +214,6 @@ export default function Header({
                         </span>
                       </button>
 
-                      <Link
-                        to="/login"
-                        onClick={() => setDropdownOpen(false)}
-                        className="w-full px-3.5 py-2.5 rounded-xl text-left text-sm font-medium text-slate-700 hover:bg-slate-100 flex items-center gap-3 transition-colors"
-                      >
-                        <LogIn className="w-4 h-4 text-slate-400 shrink-0" />
-                        <span>Login sahifasi</span>
-                      </Link>
-
-                      <Link
-                        to="/register"
-                        onClick={() => setDropdownOpen(false)}
-                        className="w-full px-3.5 py-2.5 rounded-xl text-left text-sm font-medium text-slate-700 hover:bg-slate-100 flex items-center gap-3 transition-colors"
-                      >
-                        <UserPlus className="w-4 h-4 text-slate-400 shrink-0" />
-                        <span>Register sahifasi</span>
-                      </Link>
                     </div>
 
                     {/* Logout Modal Trigger */}

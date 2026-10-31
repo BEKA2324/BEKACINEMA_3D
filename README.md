@@ -23,7 +23,8 @@ npm run dev
 `.env`, `node_modules`, `dist`, foydalanuvchilar va sessiyalar Gitga kiritilmaydi. Yangi backend bo‘sh hisoblar bazasini avtomatik yaratadi. Admin paroli faqat `backend/.env` orqali o‘rnatiladi.
 
 The 3D bee lives in `src/components/CinemaBee.jsx`; its original animated model is in `public/models/demon_bee_full_texture.glb`.
-The bee appears on the public `/about` page, reached through the footer. `/about#support` opens the help section. Three.js and GSAP load when the about page mounts; the home page has no 3D overlay. Pointer movement turns the bee, and the corner button hides it. Reduced motion pauses model animation.
+The public `/about` page contains a liquid glass 3D library with the bee and butterfly. Each card has a live preview and a larger viewer with orbit/zoom and pause/play controls. `/about#support` opens the help section. Three.js loads dynamically; previews pause outside the viewport and while the model dialog is open. Reduced motion starts playback paused.
+The home page has a separate animated butterfly overlay (`ButterflyFlight.jsx`): five clones on desktop, two on mobile. The overlay lets clicks pass through; its bottom-left button hides it. It starts disabled for reduced motion. The model is loaded once per mount, with shared geometry/textures and independent skeleton animations.
 Liquid glass styles are in `src/index.css`. Edit `src`, then run `npm.cmd run build`; `dist` is generated output.
 
 Backend: `backend/`.

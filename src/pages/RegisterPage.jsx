@@ -87,7 +87,7 @@ export default function RegisterPage() {
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} autoComplete="off" className="space-y-4">
             {/* 1. phoneNumber */}
             <div>
               <label className="block text-xs font-semibold text-slate-700 mb-2">
@@ -98,6 +98,7 @@ export default function RegisterPage() {
                 <input
                   type="tel"
                   name="phoneNumber"
+                  autoComplete="off"
                   required
                   value={phoneNumber}
                   onChange={(e) => setPhoneNumber(e.target.value)}
@@ -117,6 +118,9 @@ export default function RegisterPage() {
                 <input
                   type="email"
                   name="email"
+                  autoComplete="off"
+                  autoCapitalize="none"
+                  spellCheck={false}
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
@@ -136,6 +140,7 @@ export default function RegisterPage() {
                 <input
                   type={showPassword ? 'text' : 'password'}
                   name="password"
+                  autoComplete="new-password"
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
@@ -156,13 +161,14 @@ export default function RegisterPage() {
             {/* 4. confirmPassword */}
             <div>
               <label className="block text-xs font-semibold text-slate-700 mb-2">
-                Parolni tasdiqlash (confirmPassword)
+                Parolni tasdiqlash
               </label>
               <div className="input-shell">
                 <Lock className="w-4 h-4 text-slate-400 shrink-0" />
                 <input
                   type={showPassword ? 'text' : 'password'}
                   name="confirmPassword"
+                  autoComplete="new-password"
                   required
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}

@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { ArrowLeft, ArrowUpRight, Bookmark, Film, Sparkles } from 'lucide-react';
-import CinemaBee from '../components/CinemaBee';
+import ModelLibrary from '../components/ModelLibrary';
 import Footer from '../components/Footer';
 import ContactLinks from '../components/ContactLinks';
 
@@ -20,19 +20,15 @@ export default function AboutPage() {
       </nav>
     </header>
     <main className="max-w-7xl mx-auto px-5 sm:px-8 py-12 sm:py-20 space-y-12">
-      <section data-bee-section="banner" className="grid lg:grid-cols-2 gap-8 items-center">
+      <section data-bee-section="banner" className="space-y-8">
         <div className="space-y-6">
-          <p className="inline-flex items-center gap-2 text-xs font-bold tracking-widest uppercase text-indigo-600"><Sparkles size={15} /> Biz haqimizda</p>
-          <h1 className="font-display text-4xl sm:text-6xl font-bold tracking-tight leading-tight">Kino birlashtiradi.<br /><span className="text-indigo-600">Hikoyalar ilhom beradi.</span></h1>
-          <p className="text-slate-500 leading-relaxed max-w-lg">BEKACINEMA — BEKA tomonidan yaratilgan kino va seriallar olami. Bu yerda yangi hikoyalarni kashf etasiz va sevimli filmlaringizni keyinroq topish uchun saqlab qo‘yasiz.</p>
-          <Link to="/" className="btn-primary bg-indigo-600">Katalogni ochish <ArrowUpRight size={16} /></Link>
-        </div>
-        <div className="about-bee-panel glass-panel rounded-[32px] relative overflow-hidden">
-          <div className="absolute left-6 top-6 text-xs font-semibold text-indigo-500">BEKACINEMA · 3D HAMROH</div>
-          <CinemaBee embedded />
-          <p className="relative text-center text-xs text-slate-500 px-6 pb-6">Sichqonchani harakatlantiring — hamrohimiz sizga qaraydi.</p>
+          <p className="inline-flex items-center gap-2 text-xs font-bold tracking-widest uppercase text-indigo-600"><Sparkles size={15} /> BEKA · Interaktiv olam</p>
+          <h1 className="font-display text-4xl sm:text-6xl font-bold tracking-tight leading-tight">3D animatsiyalar<br /><span className="text-indigo-600">kutubxonasi.</span></h1>
+          <p className="text-slate-500 leading-relaxed max-w-xl">Tasavvurga jon bering. Kolibri, feniks, ari va kapalakni yaqindan ko‘ring, aylantiring va har bir detalini kashf eting. BEKACINEMA ichidagi kichik ijodiy olam — BEKA tomonidan.</p>
+          <a href="#models" className="btn-primary bg-indigo-600">Modellarni ko‘rish <ArrowUpRight size={16} /></a>
         </div>
       </section>
+      <ModelLibrary />
       <section data-bee-section="catalog" className="grid sm:grid-cols-3 gap-4" aria-label="Loyiha haqida">
         {[
           [Film, 'Yangi hikoyalar', 'Turli janrdagi filmlar va seriallarni bir joydan toping.'],

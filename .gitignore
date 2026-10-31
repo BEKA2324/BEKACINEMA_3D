@@ -5,6 +5,7 @@ dist/
 !.env.example
 *.log
 bee-check.png
+butterfly-check.png
 cineva-glass-toast.png
 .DS_Store
 Thumbs.db

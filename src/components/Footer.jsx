@@ -53,7 +53,7 @@ export default function Footer() {
               </li>
               <li>
                 <Link to="/about" className="hover:text-indigo-600 transition-colors">
-                  Biz haqimizda · 3D hamroh
+                  3D kutubxona · Biz haqimizda
                 </Link>
               </li>
               <li>
