@@ -44,6 +44,8 @@ async function request(route, method = 'GET', body, expected = 200) {
   assert.equal(admin.user.role, 'admin');
   assert.equal((await request('/auth/me')).role, 'admin');
   const movie = await request('/movies', 'POST', { ...movies[0], title: 'API test' }, 201);
+  assert.equal(movie.trailerId, movies[0].trailerId);
+  await request('/movies', 'POST', { ...movies[0], trailerId: 'invalid' }, 400);
   await request('/movies/' + movie.id, 'PUT', { ...movie, title: 'Updated test' });
   await request('/watchlist/' + movie.id, 'PUT');
   await request('/movies/' + movie.id, 'DELETE', undefined, 204);

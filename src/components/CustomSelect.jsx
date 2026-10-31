@@ -46,9 +46,9 @@ export default function CustomSelect({
       <button
         type="button"
         onClick={() => setIsOpen((prev) => !prev)}
-        className={`w-full ${heightClass} rounded-xl bg-slate-50/90 hover:bg-slate-100/80 border border-slate-200/90 flex items-center justify-between gap-2.5 text-slate-800 font-medium transition-all duration-200 ${
+        className={`w-full ${heightClass} rounded-xl bg-slate-50/90 dark:bg-slate-800/90 hover:bg-slate-100/80 border border-slate-200/90 dark:border-slate-700/90 flex items-center justify-between gap-2.5 text-slate-800 dark:text-slate-100 font-medium transition-all duration-200 ${
           isOpen
-            ? 'bg-white border-indigo-500 ring-4 ring-indigo-500/10'
+            ? 'bg-white dark:bg-slate-900 border-indigo-500 ring-4 ring-indigo-500/10'
             : ''
         }`}
         aria-expanded={isOpen}
@@ -61,13 +61,13 @@ export default function CustomSelect({
         </span>
         <ChevronDown
           className={`w-4 h-4 text-slate-400 shrink-0 transition-transform duration-200 ${
-            isOpen ? 'rotate-180 text-indigo-600' : ''
+            isOpen ? 'rotate-180 text-indigo-600 dark:text-indigo-400' : ''
           }`}
         />
       </button>
 
       {isOpen && (
-        <div className="absolute left-0 right-0 mt-2 min-w-[180px] bg-white rounded-2xl border border-slate-200/90 shadow-apple-lg p-1.5 z-50 animate-modal max-h-60 overflow-y-auto">
+        <div className="absolute left-0 right-0 mt-2 min-w-[180px] bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/90 dark:border-slate-700/90 shadow-apple-lg p-1.5 z-50 animate-modal max-h-60 overflow-y-auto">
           {normalizedOptions.map((opt) => {
             const isSelected = opt.value === value;
             return (
@@ -80,13 +80,13 @@ export default function CustomSelect({
                 }}
                 className={`w-full px-3 py-2.5 rounded-xl text-left text-xs sm:text-sm font-medium flex items-center justify-between gap-2 transition-colors ${
                   isSelected
-                    ? 'bg-indigo-50 text-indigo-600 font-semibold'
-                    : 'text-slate-700 hover:bg-slate-100/80 hover:text-slate-900'
+                    ? 'bg-indigo-50 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400 font-semibold'
+                    : 'text-slate-700 dark:text-slate-200 hover:bg-slate-100/80 hover:text-slate-900'
                 }`}
               >
                 <span className="truncate">{opt.label}</span>
                 {isSelected && (
-                  <Check className="w-4 h-4 text-indigo-600 shrink-0" />
+                  <Check className="w-4 h-4 text-indigo-600 dark:text-indigo-400 shrink-0" />
                 )}
               </button>
             );

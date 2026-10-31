@@ -107,6 +107,6 @@ export default function ModelViewer({ file, name, playing = true, interactive = 
 
   return <div className="model-viewer" data-status={status}>
     <div ref={host} className="model-viewer-stage" role="img" aria-label={`${name} — 3D model`} />
-    {status !== 'ready' && <p role={status === 'error' ? 'alert' : 'status'} className="absolute inset-0 grid place-items-center text-sm text-indigo-500 p-6 text-center pointer-events-none">{status === 'error' ? 'Model ochilmadi. Sahifani yangilab ko‘ring; WebGL yoqilgan bo‘lsin.' : '3D model yuklanmoqda…'}</p>}
+    {status !== 'ready' && <p role={status === 'error' ? 'alert' : 'status'} className="absolute inset-0 grid place-items-center text-sm text-indigo-500 dark:text-indigo-400 p-6 text-center pointer-events-none">{status === 'error' ? 'Model ochilmadi. Sahifani yangilab ko‘ring; WebGL yoqilgan bo‘lsin.' : '3D model yuklanmoqda…'}</p>}
   </div>;
 }

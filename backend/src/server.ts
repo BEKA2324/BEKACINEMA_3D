@@ -137,11 +137,13 @@ app.patch('/api/auth/me', async (req: any, res) => {
 app.get('/api/movies', async (_req, res) => { res.json(await read('movies')); });
 function movieData(body: any) {
   if (!body || typeof body.title !== 'string' || !body.title.trim() || typeof body.description !== 'string' || !body.description.trim()) fail('Film nomi va tavsifi kerak.');
-  if (!['movie', 'series'].includes(body.type) || !['Fantastika', 'Triller', 'Drama', 'Sarguzasht', 'Animatsiya'].includes(body.genre)) fail('Janr yoki turi noto‘g‘ri.');
+  if (!['movie', 'series'].includes(body.type) || !['Jangovar', 'Fantastika', 'Triller', 'Drama', 'Sarguzasht', 'Animatsiya'].includes(body.genre)) fail('Janr yoki turi noto‘g‘ri.');
   if (!String(body.rating).trim() || !Number.isFinite(Number(body.rating)) || Number(body.rating) < 0 || Number(body.rating) > 10) fail('Reyting 0–10 orasida bo‘lsin.');
   if (!/^\d{4}$/.test(String(body.year))) fail('Yil 4 ta raqamdan iborat bo‘lsin.');
   if (body.poster && !/^https?:\/\//.test(body.poster)) fail('Poster HTTP yoki HTTPS manzil bo‘lsin.');
-  return Object.fromEntries(['title', 'description', 'genre', 'type', 'rating', 'year', 'duration', 'quality', 'director', 'poster'].map(key => [key, String(body[key] ?? '').trim()]));
+  if (body.trailerId && (typeof body.trailerId !== 'string' || !/^[A-Za-z0-9_-]{11}$/.test(body.trailerId))) fail('YouTube video ID 11 ta belgidan iborat bo‘lsin.');
+  if (body.backdrop && !/^https?:\/\//.test(body.backdrop)) fail('Banner HTTP yoki HTTPS manzil bo‘lsin.');
+  return Object.fromEntries(['title', 'description', 'genre', 'type', 'rating', 'year', 'duration', 'quality', 'director', 'poster', 'backdrop', 'trailerId'].map(key => [key, String(body[key] ?? '').trim()]));
 }
 // Resolve permissions from stored user data for every catalog mutation.
 app.use('/api/movies', async (req: any, _res, next) => {

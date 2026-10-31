@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Play, Phone, Mail, Lock, Eye, EyeOff, ArrowLeft } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import ThemeToggle from '../components/ThemeToggle';
 
 export default function RegisterPage() {
   const { register } = useAuth();
@@ -45,12 +46,13 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#F6F7FB] flex flex-col justify-between p-4 sm:p-8">
+    <div className="min-h-screen bg-[#F6F7FB] dark:bg-slate-950 flex flex-col justify-between p-4 sm:p-8">
       {/* Top Bar */}
-      <div className="max-w-5xl w-full mx-auto flex items-center justify-between">
+      <div className="max-w-5xl w-full mx-auto flex flex-wrap gap-3 items-center justify-between">
+        <ThemeToggle />
         <Link
           to="/"
-          className="inline-flex items-center gap-2 text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors"
+          className="inline-flex items-center gap-2 text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-slate-900 transition-colors"
         >
           <ArrowLeft className="w-4 h-4 shrink-0" />
           <span>Asosiy sahifaga qaytish</span>
@@ -60,29 +62,29 @@ export default function RegisterPage() {
           <div className="w-9 h-9 rounded-xl bg-indigo-600 flex items-center justify-center text-white">
             <Play className="w-4 h-4 fill-white ml-0.5" />
           </div>
-          <span className="font-display font-bold text-lg text-slate-900">
-            BEKA<span className="text-indigo-600">CINEMA</span>
+          <span className="font-display font-bold text-lg text-slate-900 dark:text-slate-100">
+            BEKA<span className="text-indigo-600 dark:text-indigo-400">CINEMA</span>
           </span>
         </Link>
       </div>
 
       {/* Centered Clean Register Card */}
       <main className="my-auto py-8 flex items-center justify-center">
-        <div className="w-full max-w-md bg-white rounded-3xl border border-slate-200/90 shadow-apple-lg p-7 sm:p-9">
+        <div className="w-full max-w-md bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/90 dark:border-slate-700/90 shadow-apple-lg p-7 sm:p-9">
           <div className="text-center mb-7">
-            <div className="w-12 h-12 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center mx-auto mb-3">
+            <div className="w-12 h-12 rounded-2xl bg-indigo-50 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400 flex items-center justify-center mx-auto mb-3">
               <Play className="w-5 h-5 fill-indigo-600 ml-0.5" />
             </div>
-            <h1 className="font-display text-2xl font-bold text-slate-900">
+            <h1 className="font-display text-2xl font-bold text-slate-900 dark:text-slate-100">
               Ro'yxatdan o'tish
             </h1>
-            <p className="text-sm text-slate-500 mt-1">
+            <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
               Yangi hisob yaratish uchun ma'lumotlarni to'ldiring
             </p>
           </div>
 
           {error && (
-            <div className="mb-5 p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-600 text-xs font-medium">
+            <div className="mb-5 p-3.5 rounded-xl bg-rose-50 dark:bg-rose-950 border border-rose-200 text-rose-600 dark:text-rose-400 text-xs font-medium">
               {error}
             </div>
           )}
@@ -90,7 +92,7 @@ export default function RegisterPage() {
           <form onSubmit={handleSubmit} autoComplete="off" className="space-y-4">
             {/* 1. phoneNumber */}
             <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-2">
+              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-200 mb-2">
                 Telefon raqamingiz
               </label>
               <div className="input-shell">
@@ -110,7 +112,7 @@ export default function RegisterPage() {
 
             {/* 2. email */}
             <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-2">
+              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-200 mb-2">
                 Email manzilingiz
               </label>
               <div className="input-shell">
@@ -132,7 +134,7 @@ export default function RegisterPage() {
 
             {/* 3. password */}
             <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-2">
+              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-200 mb-2">
                 Parolingiz
               </label>
               <div className="input-shell">
@@ -160,7 +162,7 @@ export default function RegisterPage() {
 
             {/* 4. confirmPassword */}
             <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-2">
+              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-200 mb-2">
                 Parolni tasdiqlash
               </label>
               <div className="input-shell">
@@ -186,12 +188,12 @@ export default function RegisterPage() {
             </button>
           </form>
 
-          <div className="mt-6 pt-6 border-t border-slate-100 text-center">
-            <p className="text-sm text-slate-500">
+          <div className="mt-6 pt-6 border-t border-slate-100 dark:border-slate-800 text-center">
+            <p className="text-sm text-slate-500 dark:text-slate-400">
               Allaqachon hisobingiz bormi?{' '}
               <Link
                 to="/login"
-                className="font-semibold text-indigo-600 hover:text-indigo-700"
+                className="font-semibold text-indigo-600 dark:text-indigo-400 hover:text-indigo-700"
               >
                 Kirish
               </Link>

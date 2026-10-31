@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { CheckCircle2, X } from 'lucide-react';
-import { api } from '../api';
+import { api, publicPreview } from '../api';
 const Context = createContext(null);
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
@@ -15,6 +15,7 @@ export function AuthProvider({ children }) {
     localStorage.removeItem('cineva_token'); localStorage.removeItem('cineva_auth_user'); setUser(null);
   };
   useEffect(() => {
+    if (publicPreview) { setLoading(false); return; }
     let active = true;
     const unauthorized = () => { clearSession(); notify('Sessiya tugadi. Qayta kiring.', 'error'); };
     window.addEventListener('cineva:unauthorized', unauthorized);

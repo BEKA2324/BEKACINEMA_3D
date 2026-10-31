@@ -14,8 +14,8 @@ export default function ContactLinks({ compact = false }) {
       key={label} href={href} target={href.startsWith('https:') ? '_blank' : undefined} rel={href.startsWith('https:') ? 'noopener noreferrer' : undefined}
       className="contact-glass flex items-center gap-3 rounded-2xl p-4 min-w-0 group"
     >
-      <span className="grid place-items-center w-9 h-9 shrink-0 rounded-xl bg-indigo-100/60 text-indigo-600"><Icon size={17} /></span>
-      <span className="min-w-0 flex-1"><span className="block text-[10px] font-semibold uppercase tracking-wider text-slate-500">{label}</span><span className="block text-xs font-semibold text-slate-800 break-words mt-1">{value}</span></span>
+      <span className="grid place-items-center w-9 h-9 shrink-0 rounded-xl bg-indigo-100/60 dark:bg-indigo-900/60 text-indigo-600 dark:text-indigo-400"><Icon size={17} /></span>
+      <span className="min-w-0 flex-1"><span className="block text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">{label}</span><span className="block text-xs font-semibold text-slate-800 dark:text-slate-100 break-words mt-1">{value}</span></span>
       <ArrowUpRight size={14} className="shrink-0 text-indigo-400 group-hover:text-indigo-600" />
     </a>)}
   </div>;

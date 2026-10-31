@@ -1,4 +1,4 @@
-import { api } from '../api';
+import { api, publicPreview } from '../api';
 import { useAuth } from '../context/AuthContext';
 import React, { useState, useMemo, useEffect } from 'react';
 import {
@@ -7,15 +7,11 @@ import {
   Bookmark,
   Star,
   Plus,
-  Edit3,
-  Trash2,
   X,
   Sparkles,
   Film,
   Tv,
   Check,
-  Volume2,
-  Maximize2,
   SlidersHorizontal,
   Clock,
   Image as ImageIcon,
@@ -24,8 +20,10 @@ import Header from '../components/Header';
 import Footer from '../components/Footer';
 import CustomSelect from '../components/CustomSelect';
 import ButterflyFlight from '../components/ButterflyFlight';
+import MovieCard from '../components/MovieCard';
+import TrailerModal from '../components/TrailerModal';
 
-const GENRES = ['Barchasi', 'Fantastika', 'Triller', 'Drama', 'Sarguzasht', 'Animatsiya'];
+const GENRES = ['Barchasi', 'Jangovar', 'Fantastika', 'Triller', 'Drama', 'Sarguzasht', 'Animatsiya'];
 
 const SORT_OPTIONS = [
   { value: 'rating', label: "Reyting bo'yicha (Yuqori)" },
@@ -61,6 +59,14 @@ export default function HomePage() {
   const [playingMovie, setPlayingMovie] = useState(null);
 
   const [isFormOpen, setIsFormOpen] = useState(false);
+  useEffect(() => {
+    if (!isFormOpen) return;
+    const previous = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    const close = event => { if (event.key === 'Escape') setIsFormOpen(false); };
+    window.addEventListener('keydown', close);
+    return () => { document.body.style.overflow = previous; window.removeEventListener('keydown', close); };
+  }, [isFormOpen]);
   const [editingMovie, setEditingMovie] = useState(null);
   const [formData, setFormData] = useState({
     title: '',
@@ -68,11 +74,12 @@ export default function HomePage() {
     type: 'movie',
     rating: '9.0',
     year: '2026',
-    duration: '2 soat 15 daq',
-    quality: '4K Dolby Vision',
+    duration: 'Film treyleri',
+    quality: 'Rasmiy treyler',
     director: '',
     poster:
       'https://images.unsplash.com/photo-1536440136628-849c177e76a1?auto=format&fit=crop&w=800&q=80',
+    trailerId: '',
     description: '',
   });
 
@@ -113,11 +120,12 @@ export default function HomePage() {
       type: 'movie',
       rating: '9.1',
       year: '2026',
-      duration: '2 soat 20 daq',
-      quality: '4K Dolby Vision',
-      director: 'Christopher Nolan',
+      duration: 'Film treyleri',
+      quality: 'Rasmiy treyler',
+      director: '',
       poster:
         'https://images.unsplash.com/photo-1536440136628-849c177e76a1?auto=format&fit=crop&w=800&q=80',
+      trailerId: '',
       description: '',
     });
     setIsFormOpen(true);
@@ -135,12 +143,15 @@ export default function HomePage() {
       quality: movie.quality || '4K HDR',
       director: movie.director || '',
       poster: movie.poster,
+      backdrop: movie.backdrop || '',
+      trailerId: movie.trailerId || '',
       description: movie.description,
     });
     setIsFormOpen(true);
   };
 
   const handleDelete = async (id) => {
+    if (!window.confirm('Bu filmni katalogdan o‘chirasizmi?')) return;
     try { await api('/movies/' + id, { method: 'DELETE' }); setMovies(prev => prev.filter(m => m.id !== id)); setWatchlistIds(prev => prev.filter(value => value !== id)); notify('Film o‘chirildi.'); }
     catch (error) { notify(error.message, 'error'); }
   };
@@ -164,8 +175,9 @@ export default function HomePage() {
       />
 
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-8 pt-6 space-y-10">
+        {publicPreview && <p role="status" className="glass-panel rounded-2xl px-5 py-3 text-sm text-slate-600 dark:text-slate-300">Katalog va 3D kutubxona ochiq. Hisobga kirish, profil va saqlash xizmati tez orada.</p>}
         {/* Cinematic Hero Spotlight */}
-        {activeSlide && <section data-bee-section="banner" className="relative rounded-[32px] overflow-hidden shadow-apple-lg border border-slate-200/80 min-h-[440px] sm:min-h-[500px] flex items-end">
+        {activeSlide && <section data-bee-section="banner" className="relative rounded-[32px] overflow-hidden shadow-apple-lg border border-slate-200/80 dark:border-slate-700/80 min-h-[440px] sm:min-h-[500px] flex items-end">
           <img
             src={activeSlide.backdrop || activeSlide.poster}
             alt={activeSlide.title}
@@ -193,7 +205,7 @@ export default function HomePage() {
               <div className="flex flex-wrap items-center gap-4 text-xs sm:text-sm text-white/80 font-medium">
                 <span className="inline-flex items-center gap-1.5 text-amber-400 font-bold">
                   <Star className="w-4 h-4 fill-amber-400 shrink-0" />
-                  <span>{activeSlide.rating} IMDb</span>
+                  <span>{activeSlide.rating} · BEKA tavsiyasi</span>
                 </span>
                 <span>•</span>
                 <span>{activeSlide.year} yil</span>
@@ -213,10 +225,10 @@ export default function HomePage() {
                 <button
                   type="button"
                   onClick={() => setPlayingMovie(activeSlide)}
-                  className="inline-flex items-center gap-2.5 px-6 py-3.5 rounded-2xl bg-white hover:bg-indigo-50 text-slate-900 font-semibold text-sm shadow-lg transition-all active:scale-95"
+                  className="inline-flex items-center gap-2.5 px-6 py-3.5 rounded-2xl bg-white dark:bg-slate-900 hover:bg-indigo-50 text-slate-900 dark:text-slate-100 font-semibold text-sm shadow-lg transition-all active:scale-95"
                 >
-                  <Play className="w-4 h-4 fill-slate-900 shrink-0" />
-                  <span>Tomosha qilish</span>
+                  <Play className="w-4 h-4 fill-slate-900 dark:fill-slate-100 shrink-0" />
+                  <span>Treylerni ko‘rish</span>
                 </button>
 
                 <button
@@ -248,6 +260,7 @@ export default function HomePage() {
               {slides.map((slide, idx) => (
                 <button
                   key={slide.id}
+                  aria-label={`${slide.title} — bannerda ko‘rish`}
                   type="button"
                   onClick={() => setActiveSlideIndex(idx)}
                   className={`relative rounded-xl overflow-hidden transition-all ${
@@ -272,7 +285,7 @@ export default function HomePage() {
         </section>}
 
         {catalogLoading && <p role="status">Katalog yuklanmoqda...</p>}
-        {catalogError && <div role="alert" className="text-rose-600">{catalogError} <button onClick={loadCatalog}>Qayta urinish</button></div>}
+        {catalogError && <div role="alert" className="text-rose-600 dark:text-rose-400">{catalogError} <button onClick={loadCatalog}>Qayta urinish</button></div>}
         {/* Glass Filter & Search Bar */}
         <section data-bee-section="catalog" className="glass-panel rounded-3xl p-4 sm:p-5 flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-4">
           {/* Genre Pills */}
@@ -285,7 +298,7 @@ export default function HomePage() {
                 className={`h-11 px-4 rounded-xl text-xs font-semibold transition-all whitespace-nowrap flex items-center justify-center ${
                   selectedGenre === genre
                     ? 'bg-slate-900 text-white shadow-sm'
-                    : 'bg-slate-100/90 text-slate-600 hover:bg-slate-200/70 hover:text-slate-900'
+                    : 'bg-slate-100/90 dark:bg-slate-800/90 text-slate-600 dark:text-slate-300 hover:bg-slate-200/70 hover:text-slate-900'
                 }`}
               >
                 {genre}
@@ -296,7 +309,7 @@ export default function HomePage() {
           {/* Search Input & Custom Select Controls */}
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
             {/* Perfectly Vertically-Centered Flex Search Input */}
-            <div className="input-shell h-11 sm:w-64 bg-slate-100/80">
+            <div className="input-shell h-11 sm:w-64 bg-slate-100/80 dark:bg-slate-800/80">
               <Search className="w-4 h-4 text-slate-400 shrink-0" />
               <input
                 type="text"
@@ -308,6 +321,7 @@ export default function HomePage() {
               {searchQuery && (
                 <button
                   type="button"
+                  aria-label="Qidiruvni tozalash"
                   onClick={() => setSearchQuery('')}
                   className="flex items-center justify-center text-slate-400 hover:text-slate-600 shrink-0"
                 >
@@ -341,7 +355,7 @@ export default function HomePage() {
         {/* Section Heading */}
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="font-display text-2xl font-bold text-slate-900 tracking-tight">
+            <h2 className="font-display text-2xl font-bold text-slate-900 dark:text-slate-100 tracking-tight">
               {activeTab === 'watchlist'
                 ? 'Saqlangan filmlar ro‘yxati'
                 : activeTab === 'movie'
@@ -350,7 +364,7 @@ export default function HomePage() {
                 ? 'Davomi bor hikoyalar'
                 : 'Keyingi sevimli filmingiz shu yerda'}
             </h2>
-            <p className="text-xs text-slate-500 mt-0.5">
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
               {filteredMovies.length} ta hikoya. Tanlov esa sizdan.
             </p>
           </div>
@@ -359,13 +373,13 @@ export default function HomePage() {
         {/* Movies Grid */}
         {filteredMovies.length === 0 ? (
           <div className="glass-panel rounded-3xl p-12 text-center space-y-3">
-            <div className="w-12 h-12 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center mx-auto">
+            <div className="w-12 h-12 rounded-2xl bg-indigo-50 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400 flex items-center justify-center mx-auto">
               <Film className="w-6 h-6" />
             </div>
-            <h3 className="font-display text-lg font-bold text-slate-900">
+            <h3 className="font-display text-lg font-bold text-slate-900 dark:text-slate-100">
               Hech qanday film yoki serial topilmadi
             </h3>
-            <p className="text-xs text-slate-500 max-w-sm mx-auto">
+            <p className="text-xs text-slate-500 dark:text-slate-400 max-w-sm mx-auto">
               Qidiruv so'zini o'zgartirib ko'ring yoki barcha janrlarni tanlang.
             </p>
             <button
@@ -382,213 +396,13 @@ export default function HomePage() {
           </div>
         ) : (
           <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {filteredMovies.map((movie) => {
-              const isSaved = watchlistIds.includes(movie.id);
-              return (
-                <article
-                  key={movie.id}
-                  className="group bg-white rounded-3xl border border-slate-200/80 shadow-apple hover:shadow-apple-hover hover:-translate-y-1 transition-all duration-300 overflow-hidden flex flex-col justify-between"
-                >
-                  <div>
-                    {/* Poster Container */}
-                    <div className="relative h-64 overflow-hidden bg-slate-900">
-                      <img
-                        src={movie.poster}
-                        alt={movie.title}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-slate-950/30" />
-
-                      {/* Top Badges */}
-                      <div className="absolute top-3 left-3 right-3 flex items-center justify-between">
-                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-slate-900/75 backdrop-blur-md text-white text-[11px] font-bold">
-                          <Star className="w-3 h-3 fill-amber-400 text-amber-400 shrink-0" />
-                          <span>{movie.rating}</span>
-                        </span>
-
-                        <button
-                          type="button"
-                          onClick={() => toggleWatchlist(movie.id)}
-                          className={`w-8 h-8 rounded-full backdrop-blur-md flex items-center justify-center transition-all ${
-                            isSaved
-                              ? 'bg-rose-500 text-white shadow-md'
-                              : 'bg-slate-900/60 text-white hover:bg-white hover:text-slate-900'
-                          }`}
-                          title="Saqlanganlarga qo'shish"
-                        >
-                          <Bookmark className={`w-3.5 h-3.5 ${isSaved ? 'fill-white' : ''}`} />
-                        </button>
-                      </div>
-
-                      {/* Center Play Button on Hover */}
-                      <button
-                        type="button"
-                        onClick={() => setPlayingMovie(movie)}
-                        className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-slate-950/30 backdrop-blur-[2px]"
-                      >
-                        <span className="w-12 h-12 rounded-full bg-white text-slate-900 flex items-center justify-center shadow-xl scale-90 group-hover:scale-100 transition-transform">
-                          <Play className="w-5 h-5 fill-slate-900 ml-0.5" />
-                        </span>
-                      </button>
-
-                      {/* Bottom Poster Info */}
-                      <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between text-[11px] font-semibold text-white/90">
-                        <span className="px-2 py-0.5 rounded-md bg-white/20 backdrop-blur-md">
-                          {movie.genre}
-                        </span>
-                        <span className="px-2 py-0.5 rounded-md bg-indigo-600/90 text-white">
-                          {movie.quality || '4K HDR'}
-                        </span>
-                      </div>
-                    </div>
-
-                    {/* Card Details */}
-                    <div className="p-5 space-y-2">
-                      <div className="flex items-center gap-2 text-[11px] font-medium text-slate-400">
-                        <span className="inline-flex items-center gap-1">
-                          {movie.type === 'series' ? (
-                            <Tv className="w-3.5 h-3.5 text-indigo-500 shrink-0" />
-                          ) : (
-                            <Film className="w-3.5 h-3.5 text-indigo-500 shrink-0" />
-                          )}
-                          <span>{movie.type === 'series' ? 'Serial' : 'Film'}</span>
-                        </span>
-                        <span>•</span>
-                        <span>{movie.year}</span>
-                        <span>•</span>
-                        <span>{movie.duration}</span>
-                      </div>
-
-                      <h3
-                        onClick={() => setPlayingMovie(movie)}
-                        className="font-display font-bold text-base text-slate-900 group-hover:text-indigo-600 transition-colors cursor-pointer line-clamp-1"
-                      >
-                        {movie.title}
-                      </h3>
-
-                      <p className="text-xs text-slate-500 leading-relaxed line-clamp-2">
-                        {movie.description}
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Card Footer */}
-                  <div className="px-5 py-3.5 bg-slate-50/70 border-t border-slate-100 flex items-center justify-between">
-                    <button
-                      type="button"
-                      onClick={() => setPlayingMovie(movie)}
-                      className="text-xs font-bold text-indigo-600 hover:text-indigo-700 inline-flex items-center gap-1.5"
-                    >
-                      <Play className="w-3.5 h-3.5 fill-indigo-600 shrink-0" />
-                      <span>Tomosha qilish</span>
-                    </button>
-
-                    {isAdmin && <div className="flex items-center gap-1">
-                      <button
-                        type="button"
-                        onClick={() => handleOpenEdit(movie)}
-                        className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-200/60 transition-colors"
-                        title="Tahrirlash"
-                      >
-                        <Edit3 className="w-3.5 h-3.5" />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleDelete(movie.id)}
-                        className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors"
-                        title="O'chirish"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
-                    </div>}
-                  </div>
-                </article>
-              );
-            })}
+            {filteredMovies.map(movie => <MovieCard key={movie.id} movie={movie} isSaved={watchlistIds.includes(movie.id)} isAdmin={isAdmin} previewsEnabled={!playingMovie && !isFormOpen}
+              onSave={() => toggleWatchlist(movie.id)} onPlay={() => setPlayingMovie(movie)} onEdit={() => handleOpenEdit(movie)} onDelete={() => handleDelete(movie.id)} />)}
           </section>
         )}
       </main>
 
-      {/* Movie Player / Preview Modal */}
-      {playingMovie && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-md"
-          onClick={() => setPlayingMovie(null)}
-        >
-          <div
-            className="relative w-full max-w-3xl bg-slate-900 text-white rounded-3xl overflow-hidden shadow-2xl border border-white/15 animate-modal"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="relative h-72 sm:h-96 bg-black overflow-hidden">
-              <img
-                src={playingMovie.backdrop || playingMovie.poster}
-                alt={playingMovie.title}
-                className="w-full h-full object-cover opacity-75"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/20 to-transparent" />
-
-              <button
-                type="button"
-                onClick={() => setPlayingMovie(null)}
-                className="absolute top-4 right-4 w-9 h-9 rounded-full bg-black/50 hover:bg-black/80 backdrop-blur-md flex items-center justify-center text-white transition-colors"
-              >
-                <X className="w-4 h-4" />
-              </button>
-
-              <div className="absolute inset-0 flex flex-col items-center justify-center">
-                <div className="w-16 h-16 rounded-full bg-white/95 text-slate-900 flex items-center justify-center shadow-2xl cursor-pointer hover:scale-105 transition-transform">
-                  <Play className="w-7 h-7 fill-slate-900 ml-1" />
-                </div>
-                <span className="mt-3 px-3 py-1 rounded-full bg-black/60 backdrop-blur-md text-xs font-medium text-white/90">
-                  Treyler • {playingMovie.quality || '4K Dolby Vision'}
-                </span>
-              </div>
-
-              <div className="absolute bottom-4 left-6 right-6 space-y-2">
-                <div className="w-full h-1.5 rounded-full bg-white/20 overflow-hidden">
-                  <div className="w-1/3 h-full bg-indigo-500 rounded-full" />
-                </div>
-                <div className="flex items-center justify-between text-xs text-white/70">
-                  <span>00:42 / 02:35</span>
-                  <div className="flex items-center gap-3">
-                    <span className="px-1.5 py-0.5 rounded bg-white/15 text-[10px] font-bold">
-                      DOLBY ATMOS
-                    </span>
-                    <Volume2 className="w-4 h-4" />
-                    <Maximize2 className="w-4 h-4" />
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="p-6 sm:p-8 space-y-4">
-              <div className="flex flex-wrap items-center justify-between gap-4">
-                <div>
-                  <div className="flex items-center gap-2 text-xs text-indigo-400 font-semibold">
-                    <span>{playingMovie.genre}</span>
-                    <span>•</span>
-                    <span>{playingMovie.year}</span>
-                    <span>•</span>
-                    <span>{playingMovie.duration}</span>
-                  </div>
-                  <h3 className="font-display text-2xl font-bold text-white mt-1">
-                    {playingMovie.title}
-                  </h3>
-                </div>
-
-                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-400/15 text-amber-300 border border-amber-400/20 text-xs font-bold">
-                  <Star className="w-4 h-4 fill-amber-400 shrink-0" />
-                  <span>{playingMovie.rating} IMDb</span>
-                </span>
-              </div>
-
-              <p className="text-sm text-slate-300 leading-relaxed">
-                {playingMovie.description}
-              </p>
-            </div>
-          </div>
-        </div>
-      )}
+      {playingMovie && <TrailerModal movie={playingMovie} onClose={() => setPlayingMovie(null)} />}
 
       {/* Create / Edit Movie Modal with CustomSelect & Aligned Input Shells */}
       {isAdmin && isFormOpen && (
@@ -597,22 +411,24 @@ export default function HomePage() {
           onClick={() => setIsFormOpen(false)}
         >
           <div
-            className="w-full max-w-lg bg-white rounded-3xl border border-slate-200/90 shadow-apple-lg p-6 sm:p-8 animate-modal"
+            role="dialog" aria-modal="true" aria-label="Katalog boshqaruvi"
+            className="w-full max-w-lg max-h-[90dvh] overflow-y-auto bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/90 dark:border-slate-700/90 shadow-apple-lg p-6 sm:p-8 animate-modal"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between pb-4 border-b border-slate-100">
+            <div className="flex items-center justify-between pb-4 border-b border-slate-100 dark:border-slate-800">
               <div>
-                <span className="text-xs font-bold uppercase tracking-wider text-indigo-600">
+                <span className="text-xs font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">
                   Katalog boshqaruvi
                 </span>
-                <h3 className="font-display text-xl font-bold text-slate-900 mt-0.5">
+                <h3 className="font-display text-xl font-bold text-slate-900 dark:text-slate-100 mt-0.5">
                   {editingMovie ? 'Filmni tahrirlash' : "Yangi kino qo'shish"}
                 </h3>
               </div>
               <button
                 type="button"
                 onClick={() => setIsFormOpen(false)}
-                className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-500"
+                aria-label="Katalog formasini yopish"
+                className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 flex items-center justify-center text-slate-500 dark:text-slate-400"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -620,7 +436,7 @@ export default function HomePage() {
 
             <form onSubmit={handleFormSubmit} className="mt-5 space-y-4">
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-2">
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-200 mb-2">
                   Film yoki serial nomi
                 </label>
                 <div className="input-shell">
@@ -629,6 +445,7 @@ export default function HomePage() {
                     type="text"
                     required
                     value={formData.title}
+                    aria-label="Film yoki serial nomi"
                     onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                     placeholder="Masalan: Avatar: Olov va Kul"
                     className="input-shell-field"
@@ -638,7 +455,7 @@ export default function HomePage() {
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-2">
+                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-200 mb-2">
                     Janr
                   </label>
                   <CustomSelect
@@ -649,7 +466,7 @@ export default function HomePage() {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-2">
+                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-200 mb-2">
                     Turi
                   </label>
                   <CustomSelect
@@ -660,14 +477,15 @@ export default function HomePage() {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-2">
-                    IMDb Reyting
+                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-200 mb-2">
+                    BEKA tavsiya bahosi
                   </label>
                   <div className="input-shell">
                     <Star className="w-4 h-4 text-amber-400 fill-amber-400 shrink-0" />
                     <input
                       type="text"
                       value={formData.rating}
+                      aria-label="BEKA tavsiya bahosi"
                       onChange={(e) => setFormData({ ...formData, rating: e.target.value })}
                       className="input-shell-field"
                     />
@@ -677,7 +495,7 @@ export default function HomePage() {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-2">
+                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-200 mb-2">
                     Davomiyligi
                   </label>
                   <div className="input-shell">
@@ -685,6 +503,7 @@ export default function HomePage() {
                     <input
                       type="text"
                       value={formData.duration}
+                      aria-label="Davomiyligi"
                       onChange={(e) => setFormData({ ...formData, duration: e.target.value })}
                       placeholder="2 soat 15 daq"
                       className="input-shell-field"
@@ -693,7 +512,7 @@ export default function HomePage() {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-2">
+                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-200 mb-2">
                     Poster rasm manzili (URL)
                   </label>
                   <div className="input-shell">
@@ -701,6 +520,7 @@ export default function HomePage() {
                     <input
                       type="url"
                       value={formData.poster}
+                      aria-label="Poster manzili"
                       onChange={(e) => setFormData({ ...formData, poster: e.target.value })}
                       className="input-shell-field"
                     />
@@ -708,14 +528,20 @@ export default function HomePage() {
                 </div>
               </div>
 
+              <div className="grid sm:grid-cols-2 gap-4">
+                <label className="text-xs font-semibold text-slate-700 dark:text-slate-200 space-y-2">Chiqqan yili<input aria-label="Chiqqan yili" type="number" min="1900" max="2100" required value={formData.year} onChange={e => setFormData({ ...formData, year: e.target.value })} className="input-modern w-full" /></label>
+                <label className="text-xs font-semibold text-slate-700 dark:text-slate-200 space-y-2">Rejissyor<input aria-label="Rejissyor" value={formData.director} onChange={e => setFormData({ ...formData, director: e.target.value })} className="input-modern w-full" /></label>
+              </div>
+              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-200 space-y-2">YouTube treyler ID<input aria-label="YouTube treyler ID" placeholder="Masalan: TcMBFSGVi1c" pattern="[A-Za-z0-9_-]{11}" maxLength={11} value={formData.trailerId} onChange={e => setFormData({ ...formData, trailerId: e.target.value.trim() })} className="input-modern w-full" /></label>
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-2">
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-200 mb-2">
                   Qisqacha mazmuni (Tavsif)
                 </label>
                 <textarea
                   rows={3}
                   required
                   value={formData.description}
+                  aria-label="Qisqacha mazmuni"
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                   placeholder="Film syujeti haqida qisqacha..."
                   className="textarea-modern"
@@ -734,7 +560,7 @@ export default function HomePage() {
                   type="submit" disabled={saving}
                   className="btn-primary bg-indigo-600 hover:bg-indigo-700"
                 >
-                  {editingMovie ? 'Saqlash' : "Qo'shish"}
+                  {saving ? 'Saqlanmoqda…' : editingMovie ? 'Saqlash' : "Qo'shish"}
                 </button>
               </div>
             </form>

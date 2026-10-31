@@ -2,6 +2,15 @@
 <html lang="uz">
   <head>
     <meta charset="UTF-8" />
+    <script>
+      (() => {
+        let saved;
+        try { saved = localStorage.getItem('bekacinema_theme'); } catch {}
+        const dark = saved === 'dark' || (saved !== 'light' && matchMedia('(prefers-color-scheme: dark)').matches);
+        document.documentElement.classList.toggle('dark', dark);
+        document.documentElement.style.colorScheme = dark ? 'dark' : 'light';
+      })();
+    </script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="icon" type="image/png" href="/favicon.png" />
     <title>BEKACINEMA — Har kayfiyatga bir hikoya</title>
@@ -10,7 +19,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
   </head>
-  <body class="bg-[#F6F7FB] text-slate-900 antialiased selection:bg-indigo-600 selection:text-white">
+  <body class="bg-[#F6F7FB] text-slate-900 dark:bg-slate-950 dark:text-slate-100 antialiased selection:bg-indigo-600 selection:text-white">
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
   </body>
