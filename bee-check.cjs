@@ -1,0 +1,42 @@
+const { chromium } = require('playwright');
+const fs = require('node:fs');
+const assert = require('node:assert/strict');
+(async () => {
+  const browser = await chromium.launch({ channel: 'msedge', headless: true });
+  try {
+    const page = await browser.newPage({ viewport: { width: 1366, height: 900 } });
+    const errors = [];
+    page.on('pageerror', error => errors.push(error.message));
+    page.on('console', message => { if (['warning', 'error'].includes(message.type())) console.log(message.type(), message.text()); });
+    page.on('response', response => { if (response.url().includes('.glb')) console.log('MODEL HTTP:', response.status()); });
+    await page.addInitScript(() => localStorage.setItem('cineva_token', 'browser-test'));
+    const movies = JSON.parse(fs.readFileSync('backend/src/data/movies.json', 'utf8'));
+    await page.route('**/api/**', route => route.fulfill({ json: route.request().url().endsWith('/auth/me') ? { id: 'qa', name: 'Test', role: 'user' } : route.request().url().endsWith('/movies') ? movies : [] }));
+    await page.goto('http://127.0.0.1:5173/');
+    await page.locator('footer').waitFor();
+    assert.equal(await page.locator('canvas').count(), 0);
+    await page.getByRole('link', { name: 'Biz haqimizda · 3D hamroh' }).click();
+    await page.waitForURL('**/about');
+    await page.waitForTimeout(9000);
+    console.log('BEE:', await page.locator('.cinema-bee').count(), 'CANVAS:', await page.locator('canvas').count());
+    await page.screenshot({ path: 'bee-check.png' });
+    assert.equal(await page.locator('canvas').count(), 1);
+    const icon = await page.request.get('http://127.0.0.1:5173/favicon.png');
+    assert.equal(icon.status(), 200);
+    assert.match(icon.headers()['content-type'], /image\/png/);
+    await page.getByRole('button', { name: '3D arini yashirish' }).click();
+    assert.equal(await page.locator('canvas').count(), 0);
+    await page.getByRole('button', { name: '3D arini ko‘rsatish' }).click();
+    await page.locator('canvas').waitFor();
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.evaluate(() => window.scrollTo(0, 800));
+    await page.waitForTimeout(1500);
+    assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false);
+    await page.getByRole('link', { name: 'Qo‘llab-quvvatlash', exact: true }).click();
+    await page.waitForURL('**/about#support');
+    await page.getByText('Hisobimga qanday kiraman?', { exact: true }).click();
+    assert.equal(await page.locator('details').first().getAttribute('open'), '');
+    assert.deepEqual(errors, []);
+    console.log('PASS: no bee on home, footer navigation, about page bee, favicon, hide/show, mobile, support FAQ, no runtime errors.');
+  } finally { await browser.close(); }
+})().catch(error => { console.error(error); process.exitCode = 1; });

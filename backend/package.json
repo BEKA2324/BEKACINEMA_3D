@@ -1,0 +1,32 @@
+{
+  "name": "cineva-backend",
+  "version": "1.0.0",
+  "description": "Node.js + Express + TypeScript Starter Boilerplate",
+  "main": "index.js",
+  "scripts": {
+    "dev": "nodemon",
+    "start": "tsx src/server.ts",
+    "typecheck": "tsc --noEmit --emitDeclarationOnly false",
+    "test": "node smoke-api.cjs"
+  },
+  "keywords": [],
+  "type": "module",
+  "devDependencies": {
+    "@types/express": "^5.0.6",
+    "@types/node": "^26.6.5",
+    "nodemon": "^3.1.14",
+    "typescript": "^7.0.2"
+  },
+  "dependencies": {
+    "@types/bcrypt": "^6.0.0",
+    "@types/cors": "^2.8.19",
+    "@types/jsonwebtoken": "^9.0.10",
+    "bcrypt": "^6.0.0",
+    "cors": "^2.8.6",
+    "dotenv": "^18.0.9",
+    "express": "^5.3.0",
+    "jsonwebtoken": "^9.0.3",
+    "tsx": "^4.23.15",
+    "ua-parser-js": "^2.0.10"
+  }
+}

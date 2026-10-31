@@ -1,0 +1,47 @@
+const { chromium } = require('playwright');
+const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const path = require('node:path');
+const { spawn } = require('node:child_process');
+const os = require('node:os');
+const backend = process.argv[2];
+const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'cineva-browser-'));
+for (const name of ['users', 'user_sessions', 'movies', 'watchlists']) fs.writeFileSync(path.join(directory, name + '.json'), name === 'movies' ? fs.readFileSync(path.join(backend, 'src/data/movies.json')) : name === 'watchlists' ? '{}' : '[]');
+const server = spawn(process.execPath, ['--import', 'tsx', 'src/server.ts'], { cwd: backend, env: { ...process.env, PORT: '3002', CINEVA_DATA_DIR: directory }, windowsHide: true, stdio: ['ignore', 'pipe', 'pipe'] });
+(async () => {
+ let browser;
+ try {
+  await new Promise((resolve, reject) => { server.stdout.once('data', resolve); server.once('error', reject); server.once('exit', code => reject(Error('Server exit ' + code))); });
+  browser = await chromium.launch({ channel: 'msedge', headless: true });
+  const page = await browser.newPage();
+  const errors = []; page.on('pageerror', error => errors.push(error.message));
+  await page.route('http://localhost:4000/api/**', route => route.continue({ url: route.request().url().replace(':4000', ':3002') }));
+  await page.goto('http://127.0.0.1:5173/'); await page.waitForURL('**/login');
+  await page.goto('http://127.0.0.1:5173/register');
+  await page.locator('[name="phoneNumber"]').fill('+998901234567');
+  await page.locator('[name="email"]').fill('browser@example.com');
+  await page.locator('[name="password"]').fill('test1234');
+  await page.locator('[name="confirmPassword"]').fill('test1234');
+  await page.locator('button[type="submit"]').click();
+  await page.waitForURL('http://127.0.0.1:5173/');
+  await page.locator('.liquid-toast').waitFor();
+  assert.match(await page.locator('.liquid-toast').innerText(), /ro‘yxatdan/);
+  assert.match(await page.locator('.liquid-toast').evaluate(el => getComputedStyle(el).backdropFilter), /blur/);
+  await page.locator('article').first().waitFor();
+  await page.screenshot({ path: 'cineva-glass-toast.png', fullPage: false });
+  await page.reload(); await page.locator('article').first().waitFor();
+  await page.locator('header button').filter({ hasText: 'Profil' }).first().click();
+  await page.getByRole('button', { name: 'Profildan chiqish', exact: true }).click();
+  await page.getByRole('button', { name: 'Ha, chiqish', exact: true }).click();
+  await page.waitForURL('**/login');
+  assert.equal(await page.evaluate(() => localStorage.getItem('cineva_token')), null);
+  await page.goto('http://127.0.0.1:5173/'); await page.waitForURL('**/login');
+  await page.reload(); await page.waitForURL('**/login');
+  await page.locator('[name="phoneNumber"]').fill('+998901234567');
+  await page.locator('[name="password"]').fill('test1234');
+  await page.locator('button[type="submit"]').click(); await page.waitForURL('http://127.0.0.1:5173/');
+  await page.locator('article').first().waitFor();
+  assert.deepEqual(errors, []);
+  console.log('PASS browser: protected route, register, liquid glass toast, catalog, reload session, logout, blocked home after logout, login. Screenshot: cineva-glass-toast.png');
+ } finally { if (browser) await browser.close(); server.kill(); }
+})().catch(error => { console.error(error); process.exitCode = 1; });

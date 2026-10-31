@@ -1,0 +1,746 @@
+import { api } from '../api';
+import { useAuth } from '../context/AuthContext';
+import React, { useState, useMemo, useEffect } from 'react';
+import {
+  Search,
+  Play,
+  Bookmark,
+  Star,
+  Plus,
+  Edit3,
+  Trash2,
+  X,
+  Sparkles,
+  Film,
+  Tv,
+  Check,
+  Volume2,
+  Maximize2,
+  SlidersHorizontal,
+  Clock,
+  Image as ImageIcon,
+} from 'lucide-react';
+import Header from '../components/Header';
+import Footer from '../components/Footer';
+import CustomSelect from '../components/CustomSelect';
+
+const GENRES = ['Barchasi', 'Fantastika', 'Triller', 'Drama', 'Sarguzasht', 'Animatsiya'];
+
+const SORT_OPTIONS = [
+  { value: 'rating', label: "Reyting bo'yicha (Yuqori)" },
+  { value: 'year', label: "Yili bo'yicha (Yangi)" },
+];
+
+const TYPE_OPTIONS = [
+  { value: 'movie', label: 'Film (Badiiy)' },
+  { value: 'series', label: 'Serial (Ko‘p qismli)' },
+];
+
+export default function HomePage() {
+  const { notify, user } = useAuth();
+  const isAdmin = user?.role === 'admin';
+  const [movies, setMovies] = useState([]);
+  const [catalogLoading, setCatalogLoading] = useState(true);
+  const [catalogError, setCatalogError] = useState('');
+  const [saving, setSaving] = useState(false);
+  const loadCatalog = async () => {
+    setCatalogLoading(true); setCatalogError('');
+    try { const [items, ids] = await Promise.all([api('/movies'), api('/watchlist')]); setMovies(items); setWatchlistIds(ids); }
+    catch (error) { setCatalogError(error.message); }
+    finally { setCatalogLoading(false); }
+  };
+  useEffect(() => { loadCatalog(); }, []);
+  const [activeSlideIndex, setActiveSlideIndex] = useState(0);
+  const [activeTab, setActiveTab] = useState('all'); // 'all' | 'movie' | 'series' | 'watchlist'
+  const [selectedGenre, setSelectedGenre] = useState('Barchasi');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [sortBy, setSortBy] = useState('rating');
+  const [watchlistIds, setWatchlistIds] = useState([]);
+
+  const [playingMovie, setPlayingMovie] = useState(null);
+
+  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [editingMovie, setEditingMovie] = useState(null);
+  const [formData, setFormData] = useState({
+    title: '',
+    genre: 'Fantastika',
+    type: 'movie',
+    rating: '9.0',
+    year: '2026',
+    duration: '2 soat 15 daq',
+    quality: '4K Dolby Vision',
+    director: '',
+    poster:
+      'https://images.unsplash.com/photo-1536440136628-849c177e76a1?auto=format&fit=crop&w=800&q=80',
+    description: '',
+  });
+
+  const slides = movies.slice(0, 3);
+  const activeSlide = slides[activeSlideIndex] || slides[0];
+
+  const toggleWatchlist = async (id) => {
+    try { setWatchlistIds(await api('/watchlist/' + id, { method: 'PUT' })); }
+    catch (error) { notify(error.message, 'error'); }
+  };
+
+  const filteredMovies = useMemo(() => {
+    return movies
+      .filter((m) => {
+        const matchesSearch =
+          m.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          m.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          (m.director && m.director.toLowerCase().includes(searchQuery.toLowerCase()));
+        const matchesGenre = selectedGenre === 'Barchasi' || m.genre === selectedGenre;
+        const matchesTab =
+          activeTab === 'all' ||
+          (activeTab === 'movie' && m.type === 'movie') ||
+          (activeTab === 'series' && m.type === 'series') ||
+          (activeTab === 'watchlist' && watchlistIds.includes(m.id));
+        return matchesSearch && matchesGenre && matchesTab;
+      })
+      .sort((a, b) => {
+        if (sortBy === 'rating') return parseFloat(b.rating) - parseFloat(a.rating);
+        return parseInt(b.year) - parseInt(a.year);
+      });
+  }, [movies, searchQuery, selectedGenre, activeTab, watchlistIds, sortBy]);
+
+  const handleOpenCreate = () => {
+    setEditingMovie(null);
+    setFormData({
+      title: '',
+      genre: 'Fantastika',
+      type: 'movie',
+      rating: '9.1',
+      year: '2026',
+      duration: '2 soat 20 daq',
+      quality: '4K Dolby Vision',
+      director: 'Christopher Nolan',
+      poster:
+        'https://images.unsplash.com/photo-1536440136628-849c177e76a1?auto=format&fit=crop&w=800&q=80',
+      description: '',
+    });
+    setIsFormOpen(true);
+  };
+
+  const handleOpenEdit = (movie) => {
+    setEditingMovie(movie);
+    setFormData({
+      title: movie.title,
+      genre: movie.genre,
+      type: movie.type || 'movie',
+      rating: movie.rating,
+      year: movie.year,
+      duration: movie.duration,
+      quality: movie.quality || '4K HDR',
+      director: movie.director || '',
+      poster: movie.poster,
+      description: movie.description,
+    });
+    setIsFormOpen(true);
+  };
+
+  const handleDelete = async (id) => {
+    try { await api('/movies/' + id, { method: 'DELETE' }); setMovies(prev => prev.filter(m => m.id !== id)); setWatchlistIds(prev => prev.filter(value => value !== id)); notify('Film o‘chirildi.'); }
+    catch (error) { notify(error.message, 'error'); }
+  };
+  const handleFormSubmit = async (e) => {
+    e.preventDefault(); if (saving) return; setSaving(true);
+    try {
+      const movie = await api(editingMovie ? '/movies/' + editingMovie.id : '/movies', { method: editingMovie ? 'PUT' : 'POST', body: formData });
+      setMovies(prev => editingMovie ? prev.map(m => m.id === movie.id ? movie : m) : [movie, ...prev]);
+      setIsFormOpen(false); notify('Film saqlandi.');
+    } catch (error) { notify(error.message, 'error'); } finally { setSaving(false); }
+  };
+
+  return (
+    <div className="cinema-page min-h-screen flex flex-col">
+      <Header
+        onOpenCreateModal={isAdmin ? handleOpenCreate : undefined}
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
+        watchlistCount={watchlistIds.length}
+      />
+
+      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-8 pt-6 space-y-10">
+        {/* Cinematic Hero Spotlight */}
+        {activeSlide && <section data-bee-section="banner" className="relative rounded-[32px] overflow-hidden shadow-apple-lg border border-slate-200/80 min-h-[440px] sm:min-h-[500px] flex items-end">
+          <img
+            src={activeSlide.backdrop || activeSlide.poster}
+            alt={activeSlide.title}
+            className="absolute inset-0 w-full h-full object-cover transition-all duration-700 scale-105"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/60 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-r from-slate-950/90 via-slate-950/40 to-transparent" />
+
+          <div className="relative z-10 w-full p-6 sm:p-12 flex flex-col lg:flex-row lg:items-end justify-between gap-8">
+            <div className="max-w-2xl space-y-4 text-white">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/15 backdrop-blur-md border border-white/20 text-[11px] font-bold uppercase tracking-wider text-amber-300">
+                  <Sparkles className="w-3.5 h-3.5 shrink-0" />
+                  {activeSlide.subtitle || activeSlide.genre}
+                </span>
+                <span className="px-2.5 py-1 rounded-full bg-indigo-600/80 backdrop-blur-md text-[11px] font-semibold">
+                  {activeSlide.quality}
+                </span>
+              </div>
+
+              <h1 className="font-display text-3xl sm:text-5xl font-extrabold tracking-tight leading-[1.1]">
+                {activeSlide.title}
+              </h1>
+
+              <div className="flex flex-wrap items-center gap-4 text-xs sm:text-sm text-white/80 font-medium">
+                <span className="inline-flex items-center gap-1.5 text-amber-400 font-bold">
+                  <Star className="w-4 h-4 fill-amber-400 shrink-0" />
+                  <span>{activeSlide.rating} IMDb</span>
+                </span>
+                <span>•</span>
+                <span>{activeSlide.year} yil</span>
+                <span>•</span>
+                <span>{activeSlide.duration}</span>
+                <span>•</span>
+                <span className="px-2.5 py-0.5 rounded-lg bg-white/15 text-white">
+                  {activeSlide.genre}
+                </span>
+              </div>
+
+              <p className="text-sm sm:text-base text-white/80 leading-relaxed line-clamp-2 sm:line-clamp-3">
+                {activeSlide.description}
+              </p>
+
+              <div className="pt-2 flex flex-wrap items-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => setPlayingMovie(activeSlide)}
+                  className="inline-flex items-center gap-2.5 px-6 py-3.5 rounded-2xl bg-white hover:bg-indigo-50 text-slate-900 font-semibold text-sm shadow-lg transition-all active:scale-95"
+                >
+                  <Play className="w-4 h-4 fill-slate-900 shrink-0" />
+                  <span>Tomosha qilish</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => toggleWatchlist(activeSlide.id)}
+                  className={`inline-flex items-center gap-2 px-5 py-3.5 rounded-2xl backdrop-blur-md border font-semibold text-sm transition-all active:scale-95 ${
+                    watchlistIds.includes(activeSlide.id)
+                      ? 'bg-rose-600/90 border-rose-400 text-white'
+                      : 'bg-white/15 hover:bg-white/25 border-white/25 text-white'
+                  }`}
+                >
+                  {watchlistIds.includes(activeSlide.id) ? (
+                    <>
+                      <Check className="w-4 h-4 shrink-0" />
+                      <span>Saqlangan</span>
+                    </>
+                  ) : (
+                    <>
+                      <Bookmark className="w-4 h-4 shrink-0" />
+                      <span>Ro'yxatga qo'shish</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+
+            {/* Slide Switcher Thumbnails */}
+            <div className="flex items-center gap-3 self-start lg:self-end bg-white/10 backdrop-blur-xl p-2 rounded-2xl border border-white/15">
+              {slides.map((slide, idx) => (
+                <button
+                  key={slide.id}
+                  type="button"
+                  onClick={() => setActiveSlideIndex(idx)}
+                  className={`relative rounded-xl overflow-hidden transition-all ${
+                    activeSlideIndex === idx
+                      ? 'w-28 h-16 ring-2 ring-white shadow-md'
+                      : 'w-20 h-16 opacity-60 hover:opacity-90'
+                  }`}
+                >
+                  <img
+                    src={slide.backdrop || slide.poster}
+                    alt={slide.title}
+                    className="w-full h-full object-cover"
+                  />
+                  <div className="absolute inset-0 bg-slate-950/30" />
+                  <span className="absolute bottom-1 left-2 right-2 text-[10px] font-bold text-white truncate text-left">
+                    0{idx + 1}. {slide.title.split(':')[0]}
+                  </span>
+                </button>
+              ))}
+            </div>
+          </div>
+        </section>}
+
+        {catalogLoading && <p role="status">Katalog yuklanmoqda...</p>}
+        {catalogError && <div role="alert" className="text-rose-600">{catalogError} <button onClick={loadCatalog}>Qayta urinish</button></div>}
+        {/* Glass Filter & Search Bar */}
+        <section data-bee-section="catalog" className="glass-panel rounded-3xl p-4 sm:p-5 flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-4">
+          {/* Genre Pills */}
+          <div className="flex items-center gap-2 overflow-x-auto pb-1 lg:pb-0">
+            {GENRES.map((genre) => (
+              <button
+                key={genre}
+                type="button"
+                onClick={() => setSelectedGenre(genre)}
+                className={`h-11 px-4 rounded-xl text-xs font-semibold transition-all whitespace-nowrap flex items-center justify-center ${
+                  selectedGenre === genre
+                    ? 'bg-slate-900 text-white shadow-sm'
+                    : 'bg-slate-100/90 text-slate-600 hover:bg-slate-200/70 hover:text-slate-900'
+                }`}
+              >
+                {genre}
+              </button>
+            ))}
+          </div>
+
+          {/* Search Input & Custom Select Controls */}
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+            {/* Perfectly Vertically-Centered Flex Search Input */}
+            <div className="input-shell h-11 sm:w-64 bg-slate-100/80">
+              <Search className="w-4 h-4 text-slate-400 shrink-0" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Film, serial yoki rejissyor..."
+                className="input-shell-field text-xs"
+              />
+              {searchQuery && (
+                <button
+                  type="button"
+                  onClick={() => setSearchQuery('')}
+                  className="flex items-center justify-center text-slate-400 hover:text-slate-600 shrink-0"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              )}
+            </div>
+
+            {/* Custom Select instead of base HTML <select> */}
+            <div className="sm:w-56">
+              <CustomSelect
+                size="sm"
+                icon={SlidersHorizontal}
+                value={sortBy}
+                onChange={setSortBy}
+                options={SORT_OPTIONS}
+              />
+            </div>
+
+            {isAdmin && <button
+              type="button"
+              onClick={handleOpenCreate}
+              className="sm:hidden btn-primary bg-indigo-600 text-xs h-11"
+            >
+              <Plus className="w-4 h-4 shrink-0" />
+              <span>Kino qo'shish</span>
+            </button>}
+          </div>
+        </section>
+
+        {/* Section Heading */}
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="font-display text-2xl font-bold text-slate-900 tracking-tight">
+              {activeTab === 'watchlist'
+                ? 'Saqlangan filmlar ro‘yxati'
+                : activeTab === 'movie'
+                ? 'Badiiy filmlar katalogi'
+                : activeTab === 'series'
+                ? 'Davomi bor hikoyalar'
+                : 'Keyingi sevimli filmingiz shu yerda'}
+            </h2>
+            <p className="text-xs text-slate-500 mt-0.5">
+              {filteredMovies.length} ta hikoya. Tanlov esa sizdan.
+            </p>
+          </div>
+        </div>
+
+        {/* Movies Grid */}
+        {filteredMovies.length === 0 ? (
+          <div className="glass-panel rounded-3xl p-12 text-center space-y-3">
+            <div className="w-12 h-12 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center mx-auto">
+              <Film className="w-6 h-6" />
+            </div>
+            <h3 className="font-display text-lg font-bold text-slate-900">
+              Hech qanday film yoki serial topilmadi
+            </h3>
+            <p className="text-xs text-slate-500 max-w-sm mx-auto">
+              Qidiruv so'zini o'zgartirib ko'ring yoki barcha janrlarni tanlang.
+            </p>
+            <button
+              type="button"
+              onClick={() => {
+                setSearchQuery('');
+                setSelectedGenre('Barchasi');
+                setActiveTab('all');
+              }}
+              className="btn-primary bg-indigo-600 text-xs mt-2"
+            >
+              Filtrlarni tozalash
+            </button>
+          </div>
+        ) : (
+          <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {filteredMovies.map((movie) => {
+              const isSaved = watchlistIds.includes(movie.id);
+              return (
+                <article
+                  key={movie.id}
+                  className="group bg-white rounded-3xl border border-slate-200/80 shadow-apple hover:shadow-apple-hover hover:-translate-y-1 transition-all duration-300 overflow-hidden flex flex-col justify-between"
+                >
+                  <div>
+                    {/* Poster Container */}
+                    <div className="relative h-64 overflow-hidden bg-slate-900">
+                      <img
+                        src={movie.poster}
+                        alt={movie.title}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-slate-950/30" />
+
+                      {/* Top Badges */}
+                      <div className="absolute top-3 left-3 right-3 flex items-center justify-between">
+                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-slate-900/75 backdrop-blur-md text-white text-[11px] font-bold">
+                          <Star className="w-3 h-3 fill-amber-400 text-amber-400 shrink-0" />
+                          <span>{movie.rating}</span>
+                        </span>
+
+                        <button
+                          type="button"
+                          onClick={() => toggleWatchlist(movie.id)}
+                          className={`w-8 h-8 rounded-full backdrop-blur-md flex items-center justify-center transition-all ${
+                            isSaved
+                              ? 'bg-rose-500 text-white shadow-md'
+                              : 'bg-slate-900/60 text-white hover:bg-white hover:text-slate-900'
+                          }`}
+                          title="Saqlanganlarga qo'shish"
+                        >
+                          <Bookmark className={`w-3.5 h-3.5 ${isSaved ? 'fill-white' : ''}`} />
+                        </button>
+                      </div>
+
+                      {/* Center Play Button on Hover */}
+                      <button
+                        type="button"
+                        onClick={() => setPlayingMovie(movie)}
+                        className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-slate-950/30 backdrop-blur-[2px]"
+                      >
+                        <span className="w-12 h-12 rounded-full bg-white text-slate-900 flex items-center justify-center shadow-xl scale-90 group-hover:scale-100 transition-transform">
+                          <Play className="w-5 h-5 fill-slate-900 ml-0.5" />
+                        </span>
+                      </button>
+
+                      {/* Bottom Poster Info */}
+                      <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between text-[11px] font-semibold text-white/90">
+                        <span className="px-2 py-0.5 rounded-md bg-white/20 backdrop-blur-md">
+                          {movie.genre}
+                        </span>
+                        <span className="px-2 py-0.5 rounded-md bg-indigo-600/90 text-white">
+                          {movie.quality || '4K HDR'}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Card Details */}
+                    <div className="p-5 space-y-2">
+                      <div className="flex items-center gap-2 text-[11px] font-medium text-slate-400">
+                        <span className="inline-flex items-center gap-1">
+                          {movie.type === 'series' ? (
+                            <Tv className="w-3.5 h-3.5 text-indigo-500 shrink-0" />
+                          ) : (
+                            <Film className="w-3.5 h-3.5 text-indigo-500 shrink-0" />
+                          )}
+                          <span>{movie.type === 'series' ? 'Serial' : 'Film'}</span>
+                        </span>
+                        <span>•</span>
+                        <span>{movie.year}</span>
+                        <span>•</span>
+                        <span>{movie.duration}</span>
+                      </div>
+
+                      <h3
+                        onClick={() => setPlayingMovie(movie)}
+                        className="font-display font-bold text-base text-slate-900 group-hover:text-indigo-600 transition-colors cursor-pointer line-clamp-1"
+                      >
+                        {movie.title}
+                      </h3>
+
+                      <p className="text-xs text-slate-500 leading-relaxed line-clamp-2">
+                        {movie.description}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Card Footer */}
+                  <div className="px-5 py-3.5 bg-slate-50/70 border-t border-slate-100 flex items-center justify-between">
+                    <button
+                      type="button"
+                      onClick={() => setPlayingMovie(movie)}
+                      className="text-xs font-bold text-indigo-600 hover:text-indigo-700 inline-flex items-center gap-1.5"
+                    >
+                      <Play className="w-3.5 h-3.5 fill-indigo-600 shrink-0" />
+                      <span>Tomosha qilish</span>
+                    </button>
+
+                    {isAdmin && <div className="flex items-center gap-1">
+                      <button
+                        type="button"
+                        onClick={() => handleOpenEdit(movie)}
+                        className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-200/60 transition-colors"
+                        title="Tahrirlash"
+                      >
+                        <Edit3 className="w-3.5 h-3.5" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleDelete(movie.id)}
+                        className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors"
+                        title="O'chirish"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>}
+                  </div>
+                </article>
+              );
+            })}
+          </section>
+        )}
+      </main>
+
+      {/* Movie Player / Preview Modal */}
+      {playingMovie && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-md"
+          onClick={() => setPlayingMovie(null)}
+        >
+          <div
+            className="relative w-full max-w-3xl bg-slate-900 text-white rounded-3xl overflow-hidden shadow-2xl border border-white/15 animate-modal"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="relative h-72 sm:h-96 bg-black overflow-hidden">
+              <img
+                src={playingMovie.backdrop || playingMovie.poster}
+                alt={playingMovie.title}
+                className="w-full h-full object-cover opacity-75"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/20 to-transparent" />
+
+              <button
+                type="button"
+                onClick={() => setPlayingMovie(null)}
+                className="absolute top-4 right-4 w-9 h-9 rounded-full bg-black/50 hover:bg-black/80 backdrop-blur-md flex items-center justify-center text-white transition-colors"
+              >
+                <X className="w-4 h-4" />
+              </button>
+
+              <div className="absolute inset-0 flex flex-col items-center justify-center">
+                <div className="w-16 h-16 rounded-full bg-white/95 text-slate-900 flex items-center justify-center shadow-2xl cursor-pointer hover:scale-105 transition-transform">
+                  <Play className="w-7 h-7 fill-slate-900 ml-1" />
+                </div>
+                <span className="mt-3 px-3 py-1 rounded-full bg-black/60 backdrop-blur-md text-xs font-medium text-white/90">
+                  Treyler • {playingMovie.quality || '4K Dolby Vision'}
+                </span>
+              </div>
+
+              <div className="absolute bottom-4 left-6 right-6 space-y-2">
+                <div className="w-full h-1.5 rounded-full bg-white/20 overflow-hidden">
+                  <div className="w-1/3 h-full bg-indigo-500 rounded-full" />
+                </div>
+                <div className="flex items-center justify-between text-xs text-white/70">
+                  <span>00:42 / 02:35</span>
+                  <div className="flex items-center gap-3">
+                    <span className="px-1.5 py-0.5 rounded bg-white/15 text-[10px] font-bold">
+                      DOLBY ATMOS
+                    </span>
+                    <Volume2 className="w-4 h-4" />
+                    <Maximize2 className="w-4 h-4" />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="p-6 sm:p-8 space-y-4">
+              <div className="flex flex-wrap items-center justify-between gap-4">
+                <div>
+                  <div className="flex items-center gap-2 text-xs text-indigo-400 font-semibold">
+                    <span>{playingMovie.genre}</span>
+                    <span>•</span>
+                    <span>{playingMovie.year}</span>
+                    <span>•</span>
+                    <span>{playingMovie.duration}</span>
+                  </div>
+                  <h3 className="font-display text-2xl font-bold text-white mt-1">
+                    {playingMovie.title}
+                  </h3>
+                </div>
+
+                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-400/15 text-amber-300 border border-amber-400/20 text-xs font-bold">
+                  <Star className="w-4 h-4 fill-amber-400 shrink-0" />
+                  <span>{playingMovie.rating} IMDb</span>
+                </span>
+              </div>
+
+              <p className="text-sm text-slate-300 leading-relaxed">
+                {playingMovie.description}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Create / Edit Movie Modal with CustomSelect & Aligned Input Shells */}
+      {isAdmin && isFormOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-md"
+          onClick={() => setIsFormOpen(false)}
+        >
+          <div
+            className="w-full max-w-lg bg-white rounded-3xl border border-slate-200/90 shadow-apple-lg p-6 sm:p-8 animate-modal"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between pb-4 border-b border-slate-100">
+              <div>
+                <span className="text-xs font-bold uppercase tracking-wider text-indigo-600">
+                  Katalog boshqaruvi
+                </span>
+                <h3 className="font-display text-xl font-bold text-slate-900 mt-0.5">
+                  {editingMovie ? 'Filmni tahrirlash' : "Yangi kino qo'shish"}
+                </h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsFormOpen(false)}
+                className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-500"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <form onSubmit={handleFormSubmit} className="mt-5 space-y-4">
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-2">
+                  Film yoki serial nomi
+                </label>
+                <div className="input-shell">
+                  <Film className="w-4 h-4 text-slate-400 shrink-0" />
+                  <input
+                    type="text"
+                    required
+                    value={formData.title}
+                    onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                    placeholder="Masalan: Avatar: Olov va Kul"
+                    className="input-shell-field"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-2">
+                    Janr
+                  </label>
+                  <CustomSelect
+                    value={formData.genre}
+                    onChange={(val) => setFormData({ ...formData, genre: val })}
+                    options={GENRES.filter((g) => g !== 'Barchasi')}
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-2">
+                    Turi
+                  </label>
+                  <CustomSelect
+                    value={formData.type}
+                    onChange={(val) => setFormData({ ...formData, type: val })}
+                    options={TYPE_OPTIONS}
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-2">
+                    IMDb Reyting
+                  </label>
+                  <div className="input-shell">
+                    <Star className="w-4 h-4 text-amber-400 fill-amber-400 shrink-0" />
+                    <input
+                      type="text"
+                      value={formData.rating}
+                      onChange={(e) => setFormData({ ...formData, rating: e.target.value })}
+                      className="input-shell-field"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-2">
+                    Davomiyligi
+                  </label>
+                  <div className="input-shell">
+                    <Clock className="w-4 h-4 text-slate-400 shrink-0" />
+                    <input
+                      type="text"
+                      value={formData.duration}
+                      onChange={(e) => setFormData({ ...formData, duration: e.target.value })}
+                      placeholder="2 soat 15 daq"
+                      className="input-shell-field"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-2">
+                    Poster rasm manzili (URL)
+                  </label>
+                  <div className="input-shell">
+                    <ImageIcon className="w-4 h-4 text-slate-400 shrink-0" />
+                    <input
+                      type="url"
+                      value={formData.poster}
+                      onChange={(e) => setFormData({ ...formData, poster: e.target.value })}
+                      className="input-shell-field"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-2">
+                  Qisqacha mazmuni (Tavsif)
+                </label>
+                <textarea
+                  rows={3}
+                  required
+                  value={formData.description}
+                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                  placeholder="Film syujeti haqida qisqacha..."
+                  className="textarea-modern"
+                />
+              </div>
+
+              <div className="pt-2 flex items-center justify-end gap-3">
+                <button
+                  type="button"
+                  onClick={() => setIsFormOpen(false)}
+                  className="btn-secondary"
+                >
+                  Bekor qilish
+                </button>
+                <button
+                  type="submit" disabled={saving}
+                  className="btn-primary bg-indigo-600 hover:bg-indigo-700"
+                >
+                  {editingMovie ? 'Saqlash' : "Qo'shish"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      <Footer />
+    </div>
+  );
+}
