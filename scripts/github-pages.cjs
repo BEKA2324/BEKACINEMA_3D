@@ -26,6 +26,14 @@ const repo = 'BEKA2324/BEKACINEMA_3D';
     const current = await api('/pages');
     const result = current.status === 404 ? await api('/pages', 'POST', { build_type: 'workflow' }) : current.data.build_type !== 'workflow' ? await api('/pages', 'PUT', { build_type: 'workflow' }) : current;
     console.log(JSON.stringify({ status: result.status, url: result.data.html_url, build_type: result.data.build_type }));
+  } else if (process.argv[2] === 'set-api') {
+    const value = process.argv[3];
+    if (!/^https:\/\/[^/]+\/api$/.test(value || '')) throw Error('A valid HTTPS API URL ending in /api is required.');
+    const current = await api('/actions/variables/VITE_API_URL');
+    if (current.status === 404) await api('/actions/variables', 'POST', { name: 'VITE_API_URL', value });
+    else await api('/actions/variables/VITE_API_URL', 'PATCH', { name: 'VITE_API_URL', value });
+    await api('/actions/workflows/pages.yml/dispatches', 'POST', { ref: 'main' });
+    console.log(JSON.stringify({ variable: 'VITE_API_URL', value, deployment: 'requested' }));
   } else {
     const pages = await api('/pages');
     const runs = await api('/actions/workflows/pages.yml/runs?per_page=1');
