@@ -5,15 +5,23 @@ import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import { randomUUID, randomBytes } from 'node:crypto';
 import { readFile, writeFile, rename, mkdir } from 'node:fs/promises';
+import { resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const app = express();
-app.use(cors({ origin: ['http://localhost:5173', 'http://127.0.0.1:5173'] }));
+const allowedOrigins = (process.env.CORS_ORIGINS || 'http://localhost:5173,http://127.0.0.1:5173')
+  .split(',')
+  .map((origin) => origin.trim())
+  .filter(Boolean);
+app.use(cors({ origin: allowedOrigins }));
 app.use(express.json({ limit: '1mb' }));
 const secret = process.env.JWT_ACCESS_SECRET_KEY || randomBytes(48).toString('hex');
-const directory = process.env.CINEVA_DATA_DIR ? process.env.CINEVA_DATA_DIR + '/' : fileURLToPath(new URL('./data/', import.meta.url));
+const bundledDirectory = fileURLToPath(new URL('./data/', import.meta.url));
+const storageDirectory = process.env.CINEVA_DATA_DIR || process.env.RAILWAY_VOLUME_MOUNT_PATH;
+const directory = storageDirectory ? resolve(storageDirectory) + sep : bundledDirectory;
 await mkdir(directory, { recursive: true });
-for (const [name, initial] of Object.entries({ users: [], user_sessions: [], watchlists: {} })) {
+const initialMovies = JSON.parse(await readFile(bundledDirectory + 'movies.json', 'utf8'));
+for (const [name, initial] of Object.entries({ users: [], user_sessions: [], movies: initialMovies, watchlists: {} })) {
   try { await writeFile(directory + name + '.json', JSON.stringify(initial), { flag: 'wx' }); }
   catch (error: any) { if (error.code !== 'EEXIST') throw error; }
 }
@@ -196,4 +204,4 @@ app.use((error: any, _req: any, res: any, _next: any) => {
   if (status >= 500) console.error(error);
   res.status(status).json({ message: status >= 500 ? 'Serverda xatolik yuz berdi.' : error.message });
 });
-app.listen(Number(process.env.PORT) || 3000, '127.0.0.1', () => console.log('CINEVA API ready'));
+app.listen(Number(process.env.PORT) || 3000, '0.0.0.0', () => console.log('CINEVA API ready'));
